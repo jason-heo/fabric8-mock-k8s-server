@@ -4,6 +4,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -18,16 +19,15 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@EnableKubernetesMockClient(crud = true)
+@EnableKubernetesMockClient(https = false, crud = true)
 public class RestAssuredTest {
     static String namespace = "ns1";
 
-    KubernetesServer server = new KubernetesServer(false, true);
+    KubernetesMockServer server;
+    KubernetesClient client;
 
     @BeforeEach
     public void beforeEach() {
-        server.before();
-
         Pod pod1 = new PodBuilder()
                 .withNewMetadata()
                 .withName("pod1")
@@ -42,13 +42,12 @@ public class RestAssuredTest {
                 .and()
                 .build();
 
-        server
-                .getClient()
+        client
                 .pods()
                 .inNamespace(namespace)
                 .create(pod1);
-        server
-                .getClient()
+
+        client
                 .pods()
                 .inNamespace(namespace)
                 .create(pod2);
@@ -57,14 +56,14 @@ public class RestAssuredTest {
 
     @AfterEach
     public void afterEach() {
-        server.after();
+        server.destroy();
     }
 
     @Test
     public void testListPods() {
         // mock server의 hostname과 port를 조회하는 방법
-        String hostname = server.getMockServer().getHostName();
-        int port = server.getMockServer().getPort();
+        String hostname = server.getHostName();
+        int port = server.getPort();
 
         String url = "http://" + hostname + ":" + port + "/api/v1/namespaces/" + namespace + "/pods";
 
