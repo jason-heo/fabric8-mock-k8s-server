@@ -1,4 +1,4 @@
-package com.naver.io;
+package io.github.jasonheo;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
@@ -6,20 +6,24 @@ import io.fabric8.kubernetes.api.model.PodListBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 
-public class NonCrudModeTest {
+public class NonCrudMode {
     static String namespace = "ns1";
 
     public static void main(String[] args) {
         KubernetesServer server = new KubernetesServer(false, false);
 
+        // mock 서버 실행
         server.before();
 
-        NonCrudModeTest test = new NonCrudModeTest();
+        NonCrudMode nonCrudMode = new NonCrudMode();
 
-        test.setUp(server);
+        // API 요청에 대한 응답 정의
+        nonCrudMode.setUp(server);
 
-        test.listPods(server);
+        // pod 목록 출력
+        nonCrudMode.listPods(server);
 
+        // mock 서버 종료
         server.after();
     }
 
@@ -36,6 +40,8 @@ public class NonCrudModeTest {
                 .and()
                 .build();
 
+        // input: "/api/v1/namespaces/ns1/pods" 요청이 인입된 경우
+        // response: pod 2개를 return하도록 한다
         server
                 .expect()
                 .get()
